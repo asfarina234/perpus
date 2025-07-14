@@ -9,7 +9,10 @@ class AnggotaHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Welcome")),
+      appBar: AppBar(
+        title: const Text("Beranda Anggota"),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -17,34 +20,43 @@ class AnggotaHomeScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(child: Icon(Icons.person)),
-                SizedBox(width: 10),
-                Text(username, style: TextStyle(fontSize: 18)),
+                const CircleAvatar(child: Icon(Icons.person)),
+                const SizedBox(width: 10),
+                Text(
+                  username,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
-              "Welcome",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              "Selamat datang, $username!",
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
-            ElevatedButton(onPressed: () {}, child: Text("Get Started")),
-            SizedBox(height: 30),
-            GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              children: [
-                _buildMenuItem(context, Icons.menu_book, "Catalog", () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CategoryScreen()),
-                  );
-                }),
-                _buildMenuItem(context, Icons.favorite, "Favorites", () {}),
-                _buildMenuItem(context, Icons.history, "History", () {}),
-              ],
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.play_arrow),
+              label: const Text("Mulai Sekarang"),
+            ),
+            const SizedBox(height: 30),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                children: [
+                  _buildMenuItem(context, Icons.menu_book, "Katalog", () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CategoryScreen()),
+                    );
+                  }),
+                  _buildMenuItem(context, Icons.favorite, "Favorit", () {}),
+                  _buildMenuItem(context, Icons.history, "Riwayat", () {}),
+                  _buildMenuItem(context, Icons.settings, "Pengaturan", () {}),
+                ],
+              ),
             ),
           ],
         ),
@@ -62,12 +74,13 @@ class AnggotaHomeScreen extends StatelessWidget {
       onTap: onTap,
       child: Card(
         elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: Colors.blue),
-            SizedBox(height: 10),
-            Text(title, style: TextStyle(fontSize: 16)),
+            Icon(icon, size: 40, color: Colors.blue),
+            const SizedBox(height: 10),
+            Text(title, style: const TextStyle(fontSize: 16)),
           ],
         ),
       ),
