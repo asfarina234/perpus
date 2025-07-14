@@ -26,6 +26,7 @@ class _BookListScreenState extends State<BookListScreen> {
   List<Book> favoriteBooks = [];
 
   final BookBorrowService _bookBorrowService = BookBorrowService();
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -34,19 +35,20 @@ class _BookListScreenState extends State<BookListScreen> {
   }
 
   Future<void> _loadBooks() async {
+    setState(() => _isLoading = true);
     try {
       final allBooks = await BookService.fetchAllBooks();
       setState(() {
-        books =
-            allBooks
-                .where(
-                  (b) =>
-                      b.category.toLowerCase() == widget.category.toLowerCase(),
-                )
-                .toList();
+        books = allBooks
+            .where(
+              (b) => b.category.toLowerCase() == widget.category.toLowerCase(),
+            )
+            .toList();
       });
     } catch (e) {
       _showMessage('Gagal memuat data buku: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -95,9 +97,7 @@ class _BookListScreenState extends State<BookListScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _buildBookTile(Book book) {
@@ -105,20 +105,21 @@ class _BookListScreenState extends State<BookListScreen> {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
-        leading:
-            book.imageUrl.isNotEmpty
-                ? Image.network(
-                  book.imageUrl,
-                  width: 50,
-                  height: 70,
-                  fit: BoxFit.cover,
-                  errorBuilder:
-                      (_, __, ___) => const Icon(Icons.broken_image, size: 50),
-                )
-                : const Icon(Icons.book, size: 50, color: Colors.grey),
-        title: Text(book.judul),
-        subtitle: Text('${book.penulis} - Stok: ${book.stok}'),
+        leading: book.imageUrl.isNotEmpty
+            ? Image.network(
+                book.imageUrl,
+                width: 50,
+                height: 70,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.broken_image, size: 50),
+              )
+            : const Icon(Icons.book, size: 50, color: Colors.grey),
+        title: Text(book.judul, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text('${book.penulis} • Stok: ${book.stok}'),
         trailing: Wrap(
           spacing: 4,
           children: [
@@ -134,11 +135,11 @@ class _BookListScreenState extends State<BookListScreen> {
               onPressed: () => pinjamBuku(book),
             ),
             IconButton(
-              icon: const Icon(Icons.undo),
+              icon: const Icon(Icons.assignment_return),
               onPressed: () => kembalikanBuku(book),
             ),
             IconButton(
-              icon: const Icon(Icons.check),
+              icon: const Icon(Icons.check_circle_outline),
               onPressed: () => markAsRead(book),
             ),
           ],
@@ -147,13 +148,12 @@ class _BookListScreenState extends State<BookListScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder:
-                  (_) => BookDetailScreen(
-                    title: book.judul,
-                    author: book.penulis,
-                    imageUrl: book.imageUrl,
-                    synopsis: book.synopsis,
-                  ),
+              builder: (_) => BookDetailScreen(
+                title: book.judul,
+                author: book.penulis,
+                imageUrl: book.imageUrl,
+                synopsis: book.synopsis,
+              ),
             ),
           );
         },
@@ -163,10 +163,9 @@ class _BookListScreenState extends State<BookListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredBooks =
-        widget.role == 'admin'
-            ? books.where((b) => b.stok > 0).toList()
-            : books;
+    final filteredBooks = widget.role == 'admin'
+        ? books.where((b) => b.stok > 0).toList()
+        : books;
 
     return Scaffold(
       appBar: AppBar(
@@ -178,7 +177,8 @@ class _BookListScreenState extends State<BookListScreen> {
               final updatedFavorites = await Navigator.push<List<Book>>(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => FavoritesScreen(favoriteBooks: favoriteBooks),
+                  builder: (_) =>
+                      FavoritesScreen(favoriteBooks: favoriteBooks),
                 ),
               );
               if (updatedFavorites != null) {
@@ -188,17 +188,21 @@ class _BookListScreenState extends State<BookListScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child:
-            books.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                  itemCount: filteredBooks.length,
-                  itemBuilder:
-                      (context, index) => _buildBookTile(filteredBooks[index]),
-                ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadBooks,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: filteredBooks.isEmpty
+                    ? const Center(child: Text('Tidak ada buku tersedia.'))
+                    : ListView.builder(
+                        itemCount: filteredBooks.length,
+                        itemBuilder: (context, index) =>
+                            _buildBookTile(filteredBooks[index]),
+                      ),
+              ),
+            ),
     );
   }
 }
